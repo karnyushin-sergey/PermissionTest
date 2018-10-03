@@ -11,8 +11,8 @@ How it works:
 ```
 {
   "file": "/Users/someUser/IdeaProjects/MyOrg1/src/permissionsets/DaDaDocs_Set.permissionset",
-  "path": "/Users/someUser/IdeaProjects/MyOrg1/src/classes"
+  "path": "/Users/someUser/IdeaProjects/MyOrg1/src"
 }
 ```
-where "file" - path to permission set file and "path" - path to apex classes folder
+where "file" - path to permission set file and "path" - path to src salesforce folder
 * run "./permissionstest.php"
