@@ -36,9 +36,9 @@ class TestPermissionSet
     {
         $classNames = [];
         $setup = $this->getSetup();
-        $allNames = scandir($setup['path']);
+        $allNames = scandir("{$setup['path']}/classes");
         foreach ($allNames as $name) {
-            if (is_file("{$setup['path']}/$name") && (substr($name, -4) != '.xml')) {
+            if (is_file("{$setup['path']}/classes/$name") && (substr($name, -4) != '.xml')) {
                 $classNames[] = substr($name, 0, -4);
             }
         }
