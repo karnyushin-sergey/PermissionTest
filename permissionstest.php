@@ -3,8 +3,9 @@
 
 $testInstance = new TestPermissionSet();
 try {
-    $testInstance->test();
-    echo "Success\n";
+    if ($testInstance->test()) {
+        echo "\nSuccess!\n";
+    }
 } catch (Exception $e) {
     echo "Error: {$e->getMessage()}\n";
 }
@@ -19,46 +20,73 @@ class TestPermissionSet
     private $permissionSet;
 
     /**
+     * @return bool
      * @throws Exception
      */
-    public function test(): void
+    public function test(): bool
     {
-        $classNames = $this->getClassNames();
-        foreach ($classNames as $className) {
-            $this->checkClass($className, $this->getClassAccesses());
-        }
-    }
+        $result = true;
 
-    /**
-     * @throws Exception
-     */
-    private function getClassNames(): array
-    {
-        $classNames = [];
-        $setup = $this->getSetup();
-        $allNames = scandir("{$setup['path']}/classes");
-        foreach ($allNames as $name) {
-            if (is_file("{$setup['path']}/classes/$name") && (substr($name, -4) != '.xml')) {
-                $classNames[] = substr($name, 0, -4);
+        echo "Absent classes:\n\n";
+        $classNames = $this->getNames('classes', 4);
+        $classAccesses = $this->getAccesses('classAccesses', 'enabled', 'apexClass');
+        foreach ($classNames as $className) {
+            if (!$this->checkAccessibility($className, $classAccesses)) {
+                echo "$className\n";
+                $result = false;
             }
         }
-        return $classNames;
+
+        echo "\nAbsent pages:\n\n";
+        $pagesNames = $this->getNames('pages', 5);
+        $pagesAccesses = $this->getAccesses('pageAccesses', 'enabled', 'apexPage');
+
+        foreach ($pagesNames as $pagesName) {
+            if (!$this->checkAccessibility($pagesName, $pagesAccesses)) {
+                echo "$pagesName\n";
+                $result = false;
+            }
+        }
+
+        return $result;
     }
 
     /**
+     * @param $folder
+     * @param $extensionLength
      * @return array
      * @throws Exception
      */
-    private function getClassAccesses(): array
+    private function getNames(string $folder,int $extensionLength): array
     {
-        $classAccesses = [];
-        $permissionSet = $this->getPermissionSet();
-        foreach ($permissionSet['classAccesses'] as $classAccess) {
-            if ($classAccess['enabled'] == 'true') {
-                $classAccesses[] = $classAccess['apexClass'];
+        $names = [];
+        $setup = $this->getSetup();
+        $allNames = scandir("{$setup['path']}/$folder");
+        foreach ($allNames as $name) {
+            if (is_file("{$setup['path']}/$folder/$name") && (substr($name, -4) != '.xml')) {
+                $names[] = substr($name, 0, -$extensionLength);
             }
         }
-        return $classAccesses;
+        return $names;
+    }
+
+    /**
+     * @param string $root
+     * @param string $enabled
+     * @param string $name
+     * @return array
+     * @throws Exception
+     */
+    private function getAccesses(string $root, string $enabled, string $name): array
+    {
+        $accesses = [];
+        $permissionSet = $this->getPermissionSet();
+        foreach ($permissionSet[$root] as $access) {
+            if ($access[$enabled] == 'true') {
+                $accesses[] = $access[$name];
+            }
+        }
+        return $accesses;
     }
 
     /**
@@ -96,15 +124,16 @@ class TestPermissionSet
     /**
      * @param string $className
      * @param array $classAccesses
-     * @throws Exception
+     * @return bool
      */
-    private function checkClass(string $className, array $classAccesses): void
+    private function checkAccessibility(string $className, array $classAccesses): bool
     {
         if (in_array($className, $this->exceptions)) {
-            return;
+            return true;
         }
         if (!in_array($className, $classAccesses)) {
-            throw new Exception("$className is absent in permission set.");
+            return false;
         }
+        return true;
     }
 }

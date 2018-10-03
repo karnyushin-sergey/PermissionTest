@@ -16,3 +16,6 @@ How it works:
 ```
 where "file" - path to permission set file and "path" - path to src salesforce folder
 * run "./permissionstest.php"
+
+After running you will see list of absent permissions or "Success" message
+or message of handled exception
