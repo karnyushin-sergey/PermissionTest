@@ -40,7 +40,6 @@ class TestPermissionSet
         echo "\nAbsent pages:\n\n";
         $pagesNames = $this->getNames('pages', 5);
         $pagesAccesses = $this->getAccesses('pageAccesses', 'enabled', 'apexPage');
-
         foreach ($pagesNames as $pagesName) {
             if (!$this->checkAccessibility($pagesName, $pagesAccesses)) {
                 echo "$pagesName\n";
@@ -48,6 +47,42 @@ class TestPermissionSet
             }
         }
 
+        echo "\nAbsent fields:\n\n";
+        $fieldNames = $this->getFieldNames();
+        $fieldAccesses = $this->getAccesses('fieldPermissions', 'readable', 'field');
+        foreach ($fieldNames as $fieldName) {
+            if (!$this->checkAccessibility($fieldName, $fieldAccesses)) {
+                echo "$fieldName\n";
+                $result = false;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    private function getFieldNames(): array
+    {
+        $result = [];
+        $setup = $this->getSetup();
+        $allSObjectsFiles = scandir("{$setup['path']}/objects");
+        foreach ($allSObjectsFiles as $sObjectFile) {
+            if (is_file("{$setup['path']}/objects/$sObjectFile")) {
+                $objectName = substr($sObjectFile, 0, -7);
+                $object = new SimpleXMLElement(file_get_contents("{$setup['path']}/objects/$sObjectFile"));
+                $objectArray = json_decode(json_encode($object), true);
+                if (array_key_exists('fullName', $objectArray['fields'])) {
+                    $result[] = "$objectName.{$objectArray['fields']['fullName']}";
+                } else {
+                    foreach ($objectArray['fields'] as $field) {
+                        $result[] = "$objectName.{$field['fullName']}";
+                    }
+                }
+            }
+        }
         return $result;
     }
 
